@@ -1,0 +1,3 @@
+# To generate random keys, you can simply use <https://www.grc.com/passwords.htm>
+# and select the key with printable ASCII characters
+SECRET_KEY = ...

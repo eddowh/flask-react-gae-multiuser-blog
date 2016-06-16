@@ -6,8 +6,10 @@
 #
 
 click==6.6                # via flask
-Flask==0.11.1
+Flask-WTF==0.12
+Flask==0.11.1             # via flask-wtf
 itsdangerous==0.24        # via flask
 Jinja2==2.8               # via flask
 MarkupSafe==0.23          # via jinja2
-Werkzeug==0.11.10         # via flask
+Werkzeug==0.11.10         # via flask, flask-wtf
+WTForms==2.1              # via flask-wtf

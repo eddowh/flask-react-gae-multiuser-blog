@@ -4,17 +4,21 @@ from importlib import import_module
 import os
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 APP_NAME = 'application'
-
-DIRS = [
+SYS_DIRS = [
     'lib',
 ]
 
-DIRS.append(APP_NAME)
+# add directories to sys path
+for dir in SYS_DIRS + [APP_NAME]:
+    sys.path.insert(1, os.path.join(BASE_PATH, dir))
 
-for dir in DIRS:
-    sys.path.insert(1, os.path.join(HERE, dir))
+# register flask configuration environment variable
+SETTINGS_FILEPATH = os.path.join(BASE_PATH, 'priv.cfg')
+os.environ.setdefault("FLASK_CONF", SETTINGS_FILEPATH)
 
+# for starting GAE
 globals().update(import_module(APP_NAME).__dict__)
