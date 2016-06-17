@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collections import OrderedDict
 from datetime import datetime
 
 from flask import Blueprint, request
@@ -20,12 +21,12 @@ def blog_key(name='default'):
 class PostViewMixin(object):
 
     def get_post_context(self, post):
-        return {
-            'subject': post.subject,
-            'content': post.content,
-            'created': datetime.strftime(post.created, TIME_FMT),
-            'last_modified': datetime.strftime(post.last_modified, TIME_FMT),
-        }
+        return OrderedDict([
+            ('subject', post.subject),
+            ('content', post.content),
+            ('created', datetime.strftime(post.created, TIME_FMT)),
+            ('last_modified', datetime.strftime(post.last_modified, TIME_FMT)),
+        ])
 
 
 @api.resource('/posts/')
