@@ -39,26 +39,42 @@ class BlogPostsAPI(Resource, PostViewMixin):
 @api.resource('/posts/<int:post_id>/')
 class BlogPostAPI(Resource, PostViewMixin):
 
-    def _get_key(self, post_id):
+    def _get_post(self, post_id):
         key = ndb.Key('Post', int(post_id),
                       parent=blog_key())
-        return key
+        return key.get()
 
     def get(self, post_id):
-        key = self._get_key(post_id)
-        post = key.get()
-
+        post = self._get_post(post_id)
         if post:
             return self.get_post_context(post)
 
+    def put(self, post_id):
+        # initialize variables
+        post = self._get_post(post_id)
+        data = request.get_json()
+        is_modified = False
+
+        for field in ['subject', 'content']:
+            updated_val = data.get(field)
+            if updated_val and updated_val != getattr(post, field):
+                setattr(post, field, updated_val)
+                is_modified = True
+
+        # only update when changes are detected in subject/content
+        # somehow `last_modified` is automatically updated...
+        if is_modified:
+            post.put()
+        return None, 201
+
     def delete(self, post_id):
-        key = self._get_key(post_id)
-        key.delete()
+        post = self._get_post(post_id)
+        post.delete()
         return None, 204
 
 
 @api.resource('/newpost/')
-class NewPostAPI(Resource, PostViewMixin):
+class NewPostAPI(Resource):
 
     def post(self):
         data = request.get_json()
