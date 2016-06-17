@@ -55,6 +55,8 @@ class BlogPostAPI(Resource, PostResourceMixin):
         post = self._get_post(post_id)
         if post:
             return self.get_post_context(post)
+        else:
+            return None, 404
 
     def put(self, post_id):
         # initialize variables
@@ -76,7 +78,7 @@ class BlogPostAPI(Resource, PostResourceMixin):
 
     def delete(self, post_id):
         post = self._get_post(post_id)
-        post.delete()
+        post.key.delete()
         return None, 204
 
 
