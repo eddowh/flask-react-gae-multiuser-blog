@@ -7,6 +7,7 @@ ROOT_URL = 'http://localhost:8080'
 
 # Application definition
 INSTALLED_APPS = [
+    'users',
     'blogs',
 ]
 
