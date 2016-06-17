@@ -7,18 +7,18 @@ from flask import Blueprint, request
 from flask_restful import Api, Resource
 from google.appengine.ext import ndb
 
-from settings import TIME_FMT
+from settings import ROOT_URL, TIME_FMT
 from blogs.models import Post
 
 
 api = Api(Blueprint('blogs', __name__), catch_all_404s=False)
 
 
-def blog_key(name='default'):
-    return ndb.Key('blogs', name)
+def post_key(name='default'):
+    return ndb.Key('posts', name)
 
 
-class PostViewMixin(object):
+class PostResourceMixin(object):
 
     def get_post_context(self, post):
         return OrderedDict([
@@ -30,19 +30,25 @@ class PostViewMixin(object):
 
 
 @api.resource('/posts/')
-class BlogPostsAPI(Resource, PostViewMixin):
+class BlogPostsAPI(Resource, PostResourceMixin):
 
     def get(self):
         posts = Post.query().order(-Post.created)
-        return [self.get_post_context(p) for p in posts]
+        posts_resp = []
+        for p in posts:
+            resp = self.get_post_context(p)
+            resp['uri'] = ROOT_URL + \
+                api.url_for(BlogPostAPI, post_id=p.key.integer_id())
+            posts_resp.append(resp)
+        return posts_resp
 
 
 @api.resource('/posts/<int:post_id>/')
-class BlogPostAPI(Resource, PostViewMixin):
+class BlogPostAPI(Resource, PostResourceMixin):
 
     def _get_post(self, post_id):
         key = ndb.Key('Post', int(post_id),
-                      parent=blog_key())
+                      parent=post_key())
         return key.get()
 
     def get(self, post_id):
@@ -53,9 +59,9 @@ class BlogPostAPI(Resource, PostViewMixin):
     def put(self, post_id):
         # initialize variables
         post = self._get_post(post_id)
-        data = request.get_json()
         is_modified = False
 
+        data = request.get_json()
         for field in ['subject', 'content']:
             updated_val = data.get(field)
             if updated_val and updated_val != getattr(post, field):
@@ -83,11 +89,16 @@ class NewPostAPI(Resource):
         content = data.get('content')
 
         if subject and content:
-            parent = blog_key()
+            parent = post_key()
             new_post = Post(parent=parent,
-                            subject=data['subject'],
-                            content=data['content'])
+                            subject=subject,
+                            content=content)
             new_post.put()
-            return {'key': new_post.key.integer_id()}, 201
+            new_post_key = new_post.key.integer_id()
+            return (
+                {'key': new_post_key},
+                201,
+                {'Location': api.url_for(BlogPostAPI, post_id=new_post_key)},
+            )
         else:
             return None, 400  # Bad Request

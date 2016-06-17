@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+# Root URL
+ROOT_URL = 'http://localhost:8080'
+
+
 # Application definition
 INSTALLED_APPS = [
     'blogs',
@@ -8,4 +12,4 @@ INSTALLED_APPS = [
 
 
 # Universal time format throughout API
-TIME_FMT = "%Y-%m-%d %H:%M:%S"
+TIME_FMT = "%Y-%m-%dT%H:%M:%SZ"
