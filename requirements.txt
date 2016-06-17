@@ -5,11 +5,14 @@
 #    pip-compile --output-file requirements.txt requirements.in
 #
 
+aniso8601==1.1.0          # via flask-restful
 click==6.6                # via flask
-Flask-WTF==0.12
-Flask==0.11.1             # via flask-wtf
+Flask-RESTful==0.3.5
+Flask==0.11.1             # via flask-restful
 itsdangerous==0.24        # via flask
 Jinja2==2.8               # via flask
 MarkupSafe==0.23          # via jinja2
-Werkzeug==0.11.10         # via flask, flask-wtf
-WTForms==2.1              # via flask-wtf
+python-dateutil==2.5.3    # via aniso8601
+pytz==2016.4              # via flask-restful
+six==1.10.0               # via flask-restful, python-dateutil
+Werkzeug==0.11.10         # via flask

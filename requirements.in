@@ -1,2 +1,2 @@
 Flask==0.11.1
-Flask-WTF==0.12
+Flask-RESTful==0.3.5
