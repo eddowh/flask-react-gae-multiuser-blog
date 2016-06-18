@@ -31,8 +31,8 @@ class UserResourceMixin(object):
             ("bio", user.bio),
             ("is_active", user.is_active),
             ("is_admin", user.is_admin),
-            ("date_joined", datetime.strftime(user.date_joined, TIME_FMT)),
-            ("date_updated", datetime.strftime(user.date_updated, TIME_FMT)),
+            ("joined", datetime.strftime(user.joined, TIME_FMT)),
+            ("last_updated", datetime.strftime(user.last_updated, TIME_FMT)),
         ])
 
 
@@ -89,7 +89,7 @@ class UserAPI(Resource, UserResourceMixin):
                 is_modified = True
 
         if is_modified:
-            user.date_updated = datetime.now()
+            user.last_updated = datetime.now()
             user.put()
         return (
             None,
@@ -120,7 +120,7 @@ class UserPasswordChangeAPI(Resource):
 
         else:
             user.hash_password(new_password)
-            user.date_updated = datetime.now()
+            user.last_updated = datetime.now()
             user.put()
             return None, 201
 
@@ -141,7 +141,7 @@ class UserDeactivateAPI(Resource):
             return None, 401
         else:
             user.is_active = False
-            user.date_updated = datetime.now()
+            user.last_updated = datetime.now()
             user.put()
             return None, 201
 
@@ -173,6 +173,7 @@ class NewUserAPI(Resource):
         email = data.get('email')
         password = data.get('password')
         full_name = data.get('full_name', '')
+        bio = data.get('bio', '')
 
         can_be_created = (
             username is not None and
@@ -185,7 +186,8 @@ class NewUserAPI(Resource):
             new_user = User(parent=parent,
                             username=username,
                             email=email,
-                            full_name=full_name)
+                            full_name=full_name,
+                            bio=bio)
             new_user.hash_password(password)
             new_user.put()
             return (

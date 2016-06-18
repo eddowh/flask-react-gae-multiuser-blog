@@ -13,10 +13,10 @@ class User(ndb.Model):
     bio = ndb.TextProperty()
     is_active = ndb.BooleanProperty(default=True)
     is_admin = ndb.BooleanProperty(default=False)
-    date_joined = ndb.DateTimeProperty(auto_now_add=True)
+    joined = ndb.DateTimeProperty(auto_now_add=True)
     # avoid using auto_now because it updates when you're authenticated
     # with flask-httpauth even when nothing has been committed to the DB
-    date_updated = ndb.DateTimeProperty(auto_now_add=True)
+    last_updated = ndb.DateTimeProperty(auto_now_add=True)
 
     def hash_password(self, pwd):
         """Takes a plain password, and stores a hash.
