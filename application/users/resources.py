@@ -94,6 +94,45 @@ class UserAPI(Resource, UserResourceMixin):
         )
 
 
+@api.resource('/<string:username>/deactivate/')
+class UserDeactivateAPI(Resource):
+
+    @auth.login_required
+    def put(self, username):
+        user = User.query(User.username == username).get()
+        if not user:
+            return None, 404
+        if g.user != user:
+            return None, 403
+
+        password = request.get_json().get('password', '')
+        if not user.verify_password(password):
+            return None, 401
+        else:
+            user.is_active = False
+            user.date_updated = datetime.now()
+            user.put()
+            return None, 201
+
+
+@api.resource('/<string:username>/delete/')
+class UserDeleteAPI(Resource):
+
+    @auth.login_required
+    def post(self, username):
+        user = User.query(User.username == username).get()
+        if not user:
+            return None, 404
+        if g.user != user:
+            return None, 403
+        password = request.get_json().get('password', '')
+        if not user.verify_password(password):
+            return None, 401
+        else:
+            user.key.delete()
+            return None, 204
+
+
 @api.resource('/newuser/')
 class NewUserAPI(Resource):
 
