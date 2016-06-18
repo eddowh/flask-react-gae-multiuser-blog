@@ -28,6 +28,7 @@ class UserResourceMixin(object):
             ("uri", api.url_for(UserAPI, username=user.username)),
             ("email", user.email),
             ("full_name", user.full_name),
+            ("bio", user.bio),
             ("is_active", user.is_active),
             ("is_admin", user.is_admin),
             ("date_joined", datetime.strftime(user.date_joined, TIME_FMT)),
@@ -70,6 +71,7 @@ class UserAPI(Resource, UserResourceMixin):
         is_modified = False
         data = request.get_json()
 
+        # unique fields, hence the query to check
         for field in ['username', 'email']:
             mod_val = data.get(field, getattr(user, field))
             if mod_val and mod_val != getattr(user, field):
@@ -79,10 +81,12 @@ class UserAPI(Resource, UserResourceMixin):
                 else:
                     return None, 400
 
-        full_name = data.get('full_name')
-        if full_name and full_name != user.full_name:
-            user.full_name = full_name
-            is_modified = True
+        # non-unique fields
+        for field in ['full_name', 'bio']:
+            mod_val = data.get(field, getattr(user, field))
+            if mod_val and mod_val != getattr(user, field):
+                setattr(user, field, mod_val)
+                is_modified = True
 
         if is_modified:
             user.date_updated = datetime.now()

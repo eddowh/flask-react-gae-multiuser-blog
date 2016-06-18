@@ -10,6 +10,7 @@ class User(ndb.Model):
     email = ndb.StringProperty(required=True)
     password_hash = ndb.StringProperty(required=True)
     full_name = ndb.StringProperty()
+    bio = ndb.TextProperty()
     is_active = ndb.BooleanProperty(default=True)
     is_admin = ndb.BooleanProperty(default=False)
     date_joined = ndb.DateTimeProperty(auto_now_add=True)
