@@ -98,6 +98,33 @@ class UserAPI(Resource, UserResourceMixin):
         )
 
 
+@api.resource('/<string:username>/password_change/')
+class UserPasswordChangeAPI(Resource):
+
+    @auth.login_required
+    def put(self, username):
+        user = User.query(User.username == username).get()
+        if not user:
+            return None, 404
+        if g.user != user:
+            return None, 403
+
+        old_password = request.get_json().get('old_password', '')
+        if not user.verify_password(old_password):
+            return None, 401
+
+        # don't commit changes if passwords are the same
+        new_password = request.get_json().get('new_password', '')
+        if old_password == new_password:
+            return None, 204
+
+        else:
+            user.hash_password(new_password)
+            user.date_updated = datetime.now()
+            user.put()
+            return None, 201
+
+
 @api.resource('/<string:username>/deactivate/')
 class UserDeactivateAPI(Resource):
 
