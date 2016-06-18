@@ -25,7 +25,7 @@ class UserResourceMixin(object):
         return OrderedDict([
             ("username", user.username),
             ("id", user.key.integer_id()),
-            ("uri", api.url_for(UserAPI, username=user.username)),
+            ("uri", ROOT_URL + api.url_for(UserAPI, username=user.username)),
             ("email", user.email),
             ("full_name", user.full_name),
             ("bio", user.bio),
@@ -41,13 +41,7 @@ class UsersAPI(Resource, UserResourceMixin):
 
     def get(self):
         users = User.query()
-        users_resp = []
-        for user in users:
-            resp = self.get_user_base_context(user)
-            resp['uri'] = ROOT_URL + \
-                api.url_for(UserAPI, username=user.username)
-            users_resp.append(resp)
-        return users_resp
+        return [self.get_user_base_context(u) for u in users]
 
 
 @api.resource('/<string:username>/')
