@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from google.appengine.ext import ndb
-
 from passlib.apps import custom_app_context as pwd_context
+
+from google.appengine.ext import ndb
 
 
 class User(ndb.Model):

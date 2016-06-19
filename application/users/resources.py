@@ -7,10 +7,11 @@ from flask import Blueprint, g, request
 from flask_restful import Api, Resource
 from google.appengine.ext import ndb
 
+from auth import basic_auth
 from settings import ROOT_URL, TIME_FMT
-from auth import auth
-from users.models import User
 
+from users.mixins import UserDeleteMixin
+from users.models import User
 
 api = Api(Blueprint('users', __name__))
 
@@ -54,7 +55,7 @@ class UserAPI(Resource, UserResourceMixin):
         else:
             return self.get_user_base_context(user)
 
-    @auth.login_required
+    @basic_auth.login_required
     def put(self, username):
         user = User.query(User.username == username).get()
         if not user:
@@ -95,7 +96,7 @@ class UserAPI(Resource, UserResourceMixin):
 @api.resource('/<string:username>/password_change/')
 class UserPasswordChangeAPI(Resource):
 
-    @auth.login_required
+    @basic_auth.login_required
     def put(self, username):
         user = User.query(User.username == username).get()
         if not user:
@@ -122,7 +123,7 @@ class UserPasswordChangeAPI(Resource):
 @api.resource('/<string:username>/deactivate/')
 class UserDeactivateAPI(Resource):
 
-    @auth.login_required
+    @basic_auth.login_required
     def put(self, username):
         user = User.query(User.username == username).get()
         if not user:
@@ -141,9 +142,9 @@ class UserDeactivateAPI(Resource):
 
 
 @api.resource('/<string:username>/delete/')
-class UserDeleteAPI(Resource):
+class UserDeleteAPI(Resource, UserDeleteMixin):
 
-    @auth.login_required
+    @basic_auth.login_required
     def post(self, username):
         user = User.query(User.username == username).get()
         if not user:
@@ -154,7 +155,7 @@ class UserDeleteAPI(Resource):
         if not user.verify_password(password):
             return None, 401
         else:
-            user.key.delete()
+            UserDeleteMixin.delete_cascade(self, user)
             return None, 204
 
 
