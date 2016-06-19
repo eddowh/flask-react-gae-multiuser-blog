@@ -91,6 +91,7 @@ class Reaction(ndb.Model):
             'angry'
         ]
     )
+    timestamp = ndb.DateTimeProperty(auto_now_add=True)
 
 
 class Comment(ndb.Model, CommentDeleteMixin):

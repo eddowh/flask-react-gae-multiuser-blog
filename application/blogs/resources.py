@@ -33,6 +33,7 @@ class ReactionsResourceMixin(object):
                 'user_uri',
                 urls.get_user_uri(username)
             ),
+            ('timestamp', datetime.strftime(reaction.timestamp, TIME_FMT)),
         ])
 
     def get_reactions_context(self, reactions):
@@ -90,6 +91,17 @@ class UserBlogPostsAPI(Resource, PostResourceMixin):
         user = get_user_by_username_or_404(username)
         posts = Post.query(Post.author == user.key).order(-Post.created)
         return [self.get_post_context(p) for p in posts]
+
+
+@api.resource('/<string:username>/reactions/')
+class UserReactionsAPI(Resource, ReactionsResourceMixin):
+
+    def get(self, username):
+        user = get_user_by_username_or_404(username)
+        reactions = Reaction \
+            .query(Reaction.user == user.key) \
+            .order(-Reaction.timestamp)
+        return self.get_reactions_context(reactions)
 
 
 @api.resource('/posts/<int:post_id>/')

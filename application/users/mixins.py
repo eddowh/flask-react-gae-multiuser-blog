@@ -28,7 +28,11 @@ class UserResourceMixin(object):
             ("blogsposts_count", Post.query(Post.author == user.key).count()),
             (
                 "blogposts_uri",
-                urls.get_posts_uri(username=username)
+                urls.get_user_blogposts_uri(username=username)
+            ),
+            (
+                "reactions_uri",
+                urls.get_user_reactions_uri(username=username)
             ),
             ("is_active", user.is_active),
             ("is_admin", user.is_admin),
