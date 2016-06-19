@@ -7,10 +7,11 @@ from flask import Blueprint, request, g
 from flask_restful import Api, Resource
 from google.appengine.ext import ndb
 
-from auth import auth
+from auth import basic_auth
 from settings import ROOT_URL, TIME_FMT
-from blogs.models import Post
-from users.resources import api as users_api, UserAPI
+import urls
+
+from blogs.models import Post, Reaction
 
 
 api = Api(Blueprint('blogs', __name__), catch_all_404s=False)
@@ -29,7 +30,7 @@ class ReactionsResourceMixin(object):
             ('type', reaction.type),
             (
                 'user_uri',
-                ROOT_URL + users_api.url_for(UserAPI, username=username)
+                urls.get_user_uri(username)
             ),
         ])
 
@@ -110,6 +111,23 @@ class BlogPostAPI(Resource, PostResourceMixin):
         return None, 204
 
 
+@api.resource('/posts/<int:post_id>/react/')
+class BlogPostReactAPI(Resource, PostResourceMixin):
+
+    @basic_auth.login_required
+    def post(self, post_id):
+        post = self.get_post_by_id(post_id)
+        data = request.get_json()
+
+        reaction_type = data.get('type')
+        if reaction_type:
+            reaction = Reaction(user=g.user.key,
+                                post=post.key,
+                                type=reaction_type)
+            reaction.put()
+        return None, 201
+
+
 @api.resource('/posts/<int:post_id>/reactions/')
 class BlogPostReactionsAPI(Resource,
                            PostResourceMixin, ReactionsResourceMixin):
@@ -125,13 +143,15 @@ class AddPostTagAPI(Resource):
     def post(self, post_id):
         post = self.get_post_by_id(post_id)
         tags = request.get_json().get('tags', [])
-        post.add_tags(tags)
+        if len(tags) > 0:
+            post.add_tags(tags)
+        return None, 201
 
 
 @api.resource('/newpost/')
 class NewPostAPI(Resource):
 
-    @auth.login_required
+    @basic_auth.login_required
     def post(self):
         data = request.get_json()
         subject = data.get('subject')

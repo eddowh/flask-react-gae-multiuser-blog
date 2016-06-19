@@ -6,10 +6,10 @@ from flask_httpauth import HTTPBasicAuth
 from users.models import User
 
 
-auth = HTTPBasicAuth()
+basic_auth = HTTPBasicAuth()
 
 
-@auth.verify_password
+@basic_auth.verify_password
 def verify_password(username, password):
     user = User.query(User.username == username).get()
     if not user or not user.verify_password(password):
@@ -21,7 +21,7 @@ def verify_password(username, password):
     return True
 
 
-@auth.error_handler
+@basic_auth.error_handler
 def unauthorized():
     return make_response(jsonify({
         'error': 'Permission denied'
