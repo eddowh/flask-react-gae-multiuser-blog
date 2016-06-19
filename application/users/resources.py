@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from collections import OrderedDict
 from datetime import datetime
 
 from flask import Blueprint, g, request
@@ -8,9 +7,9 @@ from flask_restful import Api, Resource
 from google.appengine.ext import ndb
 
 from auth import basic_auth
-from settings import ROOT_URL, TIME_FMT
 
-from users.mixins import UserDeleteMixin
+from users.mixins import UserDeleteMixin, UserResourceMixin
+from users.utils import get_user_by_username_or_404
 from users.models import User
 
 api = Api(Blueprint('users', __name__))
@@ -18,23 +17,6 @@ api = Api(Blueprint('users', __name__))
 
 def user_key(name='default'):
     return ndb.Key('users', name)
-
-
-class UserResourceMixin(object):
-
-    def get_user_base_context(self, user):
-        return OrderedDict([
-            ("username", user.username),
-            ("id", user.key.integer_id()),
-            ("uri", ROOT_URL + api.url_for(UserAPI, username=user.username)),
-            ("email", user.email),
-            ("full_name", user.full_name),
-            ("bio", user.bio),
-            ("is_active", user.is_active),
-            ("is_admin", user.is_admin),
-            ("joined", datetime.strftime(user.joined, TIME_FMT)),
-            ("last_updated", datetime.strftime(user.last_updated, TIME_FMT)),
-        ])
 
 
 @api.resource('/')
@@ -49,17 +31,12 @@ class UsersAPI(Resource, UserResourceMixin):
 class UserAPI(Resource, UserResourceMixin):
 
     def get(self, username):
-        user = User.query(getattr(User, 'username') == username).get()
-        if not user:
-            return None, 404
-        else:
-            return self.get_user_base_context(user)
+        user = get_user_by_username_or_404(username)
+        return self.get_user_base_context(user)
 
     @basic_auth.login_required
     def put(self, username):
-        user = User.query(User.username == username).get()
-        if not user:
-            return None, 404
+        user = get_user_by_username_or_404(username)
         if g.user != user:
             return None, 403
 
@@ -98,9 +75,7 @@ class UserPasswordChangeAPI(Resource):
 
     @basic_auth.login_required
     def put(self, username):
-        user = User.query(User.username == username).get()
-        if not user:
-            return None, 404
+        user = get_user_by_username_or_404(username)
         if g.user != user:
             return None, 403
 
@@ -125,9 +100,7 @@ class UserDeactivateAPI(Resource):
 
     @basic_auth.login_required
     def put(self, username):
-        user = User.query(User.username == username).get()
-        if not user:
-            return None, 404
+        user = get_user_by_username_or_404(username)
         if g.user != user:
             return None, 403
 
@@ -146,9 +119,7 @@ class UserDeleteAPI(Resource, UserDeleteMixin):
 
     @basic_auth.login_required
     def post(self, username):
-        user = User.query(User.username == username).get()
-        if not user:
-            return None, 404
+        user = get_user_by_username_or_404(username)
         if g.user != user:
             return None, 403
         password = request.get_json().get('password', '')

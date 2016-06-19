@@ -4,13 +4,14 @@ from collections import OrderedDict
 from datetime import datetime
 
 from flask import Blueprint, request, g
-from flask_restful import Api, Resource
+from flask_restful import Api, Resource, abort
 from google.appengine.ext import ndb
 
 from auth import basic_auth
 from settings import ROOT_URL, TIME_FMT
 import urls
 
+from users.utils import get_user_by_username_or_404
 from blogs.models import Post, Reaction
 
 
@@ -43,9 +44,14 @@ class ReactionsResourceMixin(object):
 
 class PostResourceMixin(ReactionsResourceMixin):
 
-    def get_post_by_id(self, post_id):
+    def get_post_by_id_or_404(self, post_id):
         key = ndb.Key('Post', int(post_id))
-        return key.get()
+        post = key.get()
+        if post is None:
+            abort(404, status=404,
+                  message="A post with that ID does not exist.")
+        else:
+            return post
 
     def get_post_context(self, post):
         post_id = post.key.integer_id()
@@ -77,19 +83,25 @@ class BlogPostsAPI(Resource, PostResourceMixin):
         return [self.get_post_context(p) for p in posts]
 
 
+@api.resource('/<string:username>/posts/')
+class UserBlogPostsAPI(Resource, PostResourceMixin):
+
+    def get(self, username):
+        user = get_user_by_username_or_404(username)
+        posts = Post.query(Post.author == user.key).order(-Post.created)
+        return [self.get_post_context(p) for p in posts]
+
+
 @api.resource('/posts/<int:post_id>/')
 class BlogPostAPI(Resource, PostResourceMixin):
 
     def get(self, post_id):
-        post = self.get_post_by_id(post_id)
-        if post:
-            return self.get_post_context(post)
-        else:
-            return None, 404
+        post = self.get_post_by_id_or_404(post_id)
+        return self.get_post_context(post)
 
     def put(self, post_id):
         # initialize variables
-        post = self.get_post_by_id(post_id)
+        post = self.get_post_by_id_or_404(post_id)
         is_modified = False
 
         data = request.get_json()
@@ -106,7 +118,7 @@ class BlogPostAPI(Resource, PostResourceMixin):
         return None, 201
 
     def delete(self, post_id):
-        post = self.get_post_by_id(post_id)
+        post = self.get_post_by_id_or_404(post_id)
         post.key.delete()
         return None, 204
 
@@ -116,7 +128,7 @@ class BlogPostReactAPI(Resource, PostResourceMixin):
 
     @basic_auth.login_required
     def post(self, post_id):
-        post = self.get_post_by_id(post_id)
+        post = self.get_post_by_id_or_404(post_id)
         data = request.get_json()
 
         reaction_type = data.get('type')
@@ -133,7 +145,7 @@ class BlogPostReactionsAPI(Resource,
                            PostResourceMixin, ReactionsResourceMixin):
 
     def get(self, post_id):
-        post = self.get_post_by_id(post_id)
+        post = self.get_post_by_id_or_404(post_id)
         return self.get_reactions_context(post.reactions)
 
 
@@ -141,7 +153,9 @@ class BlogPostReactionsAPI(Resource,
 class AddPostTagAPI(Resource):
 
     def post(self, post_id):
-        post = self.get_post_by_id(post_id)
+        post = self.get_post_by_id_or_404(post_id)
+        if post is None:
+            return None, 404
         tags = request.get_json().get('tags', [])
         if len(tags) > 0:
             post.add_tags(tags)
