@@ -50,6 +50,17 @@ class UserReactionsAPI(Resource, ReactionResourceMixin):
         return self.get_reactions_context(reactions)
 
 
+@api.resource('/<string:username>/comments/')
+class UserCommentsAPI(Resource, CommentResourceMixin):
+
+    def get(self, username):
+        user = get_user_by_username_or_404(username)
+        comments = Comment \
+            .query(Comment.user == user.key) \
+            .order(-Comment.created)
+        return self.get_comments_context(comments)
+
+
 @api.resource('/<string:username>/posts/<int:post_id>/')
 class UserBlogPostAPI(Resource, PostResourceMixin):
 

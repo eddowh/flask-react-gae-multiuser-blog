@@ -34,6 +34,10 @@ class UserResourceMixin(object):
                 "reactions_uri",
                 urls.get_user_reactions_uri(username=username)
             ),
+            (
+                "comments_uri",
+                urls.get_user_comments_uri(username=username)
+            ),
             ("is_active", user.is_active),
             ("is_admin", user.is_admin),
             ("joined", datetime.strftime(user.joined, TIME_FMT)),
