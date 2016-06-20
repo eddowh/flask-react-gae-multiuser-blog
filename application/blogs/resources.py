@@ -75,10 +75,22 @@ class UserBlogPostAPI(Resource, PostResourceMixin):
             post.put()
         return None, 201
 
-    def delete(self, username, post_id):
+
+@api.resource('/<string:username>/posts/<int:post_id>/delete/')
+class UserBlogPostDeleteAPI(Resource, PostResourceMixin):
+
+    @basic_auth.login_required
+    def post(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
-        post.key.delete()
-        return None, 204
+        if g.user.key != post.author:
+            return None, 403
+        # enter password again to verify delete
+        password = request.get_json().get('password', '')
+        if not g.user.verify_password(password):
+            return None, 401
+        else:
+            post.delete_cascade()
+            return None, 204
 
 
 @api.resource('/<string:username>/posts/<int:post_id>/react/')
