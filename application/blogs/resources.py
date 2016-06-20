@@ -8,7 +8,7 @@ from flask_restful import Api, Resource, abort
 from google.appengine.ext import ndb
 
 from auth import basic_auth
-from settings import ROOT_URL, TIME_FMT
+from settings import TIME_FMT
 import urls
 
 from users.utils import get_user_by_username_or_404
@@ -26,13 +26,18 @@ class ReactionsResourceMixin(object):
 
     def get_reaction_context(self, reaction):
         username = reaction.user.get().username
+        post_id = reaction.post.get().key.integer_id()
         return OrderedDict([
             ('user', username),
-            ('type', reaction.type),
             (
                 'user_uri',
                 urls.get_user_uri(username)
             ),
+            (
+                'post_uri',
+                urls.get_user_blogpost_uri(username=username, post_id=post_id)
+            ),
+            ('type', reaction.type),
             ('timestamp', datetime.strftime(reaction.timestamp, TIME_FMT)),
         ])
 
@@ -55,21 +60,23 @@ class PostResourceMixin(ReactionsResourceMixin):
             return post
 
     def get_post_context(self, post):
+        username = post.author.get().username
         post_id = post.key.integer_id()
         return OrderedDict([
+            ('author', username),
             ('id', post_id),
             (
                 'uri',
-                ROOT_URL + api.url_for(BlogPostAPI, post_id=post_id)
+                urls.get_user_blogpost_uri(username=username, post_id=post_id)
             ),
-            ('author', post.author.get().username),
             ('subject', post.subject),
             ('content', post.content),
             ('tags', sorted([pt.tag.get().name for pt in post.tags])),
             ('reactions_count', post.reactions.count()),
             (
                 'reactions_uri',
-                ROOT_URL + api.url_for(BlogPostReactionsAPI, post_id=post_id)
+                urls.get_user_blogpost_reactions_uri(username=username,
+                                                     post_id=post_id)
             ),
             ('created', datetime.strftime(post.created, TIME_FMT)),
             ('last_modified', datetime.strftime(post.last_modified, TIME_FMT)),
@@ -135,6 +142,38 @@ class BlogPostAPI(Resource, PostResourceMixin):
         return None, 204
 
 
+@api.resource('/<string:username>/posts/<int:post_id>/')
+class UserBlogPostAPI(Resource, PostResourceMixin):
+
+    def get(self, username, post_id):
+        post = self.get_post_by_id_or_404(post_id)
+        print(post)
+        return self.get_post_context(post)
+
+    def put(self, username, post_id):
+        # initialize variables
+        post = self.get_post_by_id_or_404(post_id)
+        is_modified = False
+
+        data = request.get_json()
+        for field in ['subject', 'content']:
+            updated_val = data.get(field)
+            if updated_val and updated_val != getattr(post, field):
+                setattr(post, field, updated_val)
+                is_modified = True
+
+        # only update when changes are detected in subject/content
+        # somehow `last_modified` is automatically updated...
+        if is_modified:
+            post.put()
+        return None, 201
+
+    def delete(self, username, post_id):
+        post = self.get_post_by_id_or_404(post_id)
+        post.key.delete()
+        return None, 204
+
+
 @api.resource('/posts/<int:post_id>/react/')
 class BlogPostReactAPI(Resource, PostResourceMixin):
 
@@ -157,6 +196,15 @@ class BlogPostReactionsAPI(Resource,
                            PostResourceMixin, ReactionsResourceMixin):
 
     def get(self, post_id):
+        post = self.get_post_by_id_or_404(post_id)
+        return self.get_reactions_context(post.reactions)
+
+
+@api.resource('/<string:username>/posts/<int:post_id>/reactions/')
+class UserBlogPostReactionsAPI(Resource,
+                               PostResourceMixin, ReactionsResourceMixin):
+
+    def get(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
         return self.get_reactions_context(post.reactions)
 
