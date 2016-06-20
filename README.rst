@@ -2,6 +2,15 @@
 Multiuser Blog
 ##############
 
+A multiuser blog application built with Google App Engine, Flask, and React.
+
+Checklist:
+
+* [ ] Basic API endpoints
+* [ ] Admin API endpoints
+* [ ] React components
+
+
 Installation
 ============
 
