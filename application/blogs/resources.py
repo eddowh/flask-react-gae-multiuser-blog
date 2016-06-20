@@ -20,6 +20,7 @@ def post_key(name='default'):
     return ndb.Key('posts', name)
 
 
+# for admin and dev purposes
 @api.resource('/posts/')
 class BlogPostsAPI(Resource, PostResourceMixin):
 
@@ -46,37 +47,6 @@ class UserReactionsAPI(Resource, ReactionsResourceMixin):
             .query(Reaction.user == user.key) \
             .order(-Reaction.timestamp)
         return self.get_reactions_context(reactions)
-
-
-@api.resource('/posts/<int:post_id>/')
-class BlogPostAPI(Resource, PostResourceMixin):
-
-    def get(self, post_id):
-        post = self.get_post_by_id_or_404(post_id)
-        return self.get_post_context(post)
-
-    def put(self, post_id):
-        # initialize variables
-        post = self.get_post_by_id_or_404(post_id)
-        is_modified = False
-
-        data = request.get_json()
-        for field in ['subject', 'content']:
-            updated_val = data.get(field)
-            if updated_val and updated_val != getattr(post, field):
-                setattr(post, field, updated_val)
-                is_modified = True
-
-        # only update when changes are detected in subject/content
-        # somehow `last_modified` is automatically updated...
-        if is_modified:
-            post.put()
-        return None, 201
-
-    def delete(self, post_id):
-        post = self.get_post_by_id_or_404(post_id)
-        post.key.delete()
-        return None, 204
 
 
 @api.resource('/<string:username>/posts/<int:post_id>/')
@@ -111,11 +81,11 @@ class UserBlogPostAPI(Resource, PostResourceMixin):
         return None, 204
 
 
-@api.resource('/posts/<int:post_id>/react/')
-class BlogPostReactAPI(Resource, PostResourceMixin):
+@api.resource('/<string:username>/posts/<int:post_id>/react/')
+class UserReactAPI(Resource, PostResourceMixin):
 
     @basic_auth.login_required
-    def post(self, post_id):
+    def post(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
         data = request.get_json()
 
@@ -128,15 +98,6 @@ class BlogPostReactAPI(Resource, PostResourceMixin):
         return None, 201
 
 
-@api.resource('/posts/<int:post_id>/reactions/')
-class BlogPostReactionsAPI(Resource,
-                           PostResourceMixin, ReactionsResourceMixin):
-
-    def get(self, post_id):
-        post = self.get_post_by_id_or_404(post_id)
-        return self.get_reactions_context(post.reactions)
-
-
 @api.resource('/<string:username>/posts/<int:post_id>/reactions/')
 class UserBlogPostReactionsAPI(Resource,
                                PostResourceMixin, ReactionsResourceMixin):
@@ -146,10 +107,10 @@ class UserBlogPostReactionsAPI(Resource,
         return self.get_reactions_context(post.reactions)
 
 
-@api.resource('/posts/<int:post_id>/addtags/')
+@api.resource('/<string:username>/posts/<int:post_id>/addtags/')
 class AddPostTagAPI(Resource):
 
-    def post(self, post_id):
+    def post(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
         if post is None:
             return None, 404
@@ -169,8 +130,9 @@ class NewPostAPI(Resource):
         content = data.get('content')
         tags = data.get('tags', [])
 
+        user = g.user
         if subject and content:
-            new_post = Post(author=g.user.key,
+            new_post = Post(author=user.key,
                             subject=subject,
                             content=content)
             # store it in DB
@@ -180,7 +142,8 @@ class NewPostAPI(Resource):
             return (
                 {'key': new_post_key.integer_id()},
                 201,
-                {'Location': api.url_for(BlogPostAPI,
+                {'Location': api.url_for(UserBlogPostAPI,
+                                         username=user.username,
                                          post_id=new_post_key.integer_id())},
             )
         else:
