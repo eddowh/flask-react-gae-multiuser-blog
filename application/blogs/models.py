@@ -56,7 +56,7 @@ class Post(ndb.Model, PostDeleteMixin):
                 # if tag exists, there's a chance you might have associated
                 # this post with a tag already, so in that case check for
                 # whether tag has already existed, otherwise create!
-                post_tag = self.tags.filter(Tag.key == tag_key).get()
+                post_tag = self.tags.filter(PostTag.tag == tag_key).get()
                 if post_tag is None:
                     new_post_tag = PostTag(post=self.key, tag=tag_key)
                     new_post_tag.put()

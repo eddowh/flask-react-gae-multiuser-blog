@@ -108,12 +108,15 @@ class UserBlogPostReactionsAPI(Resource,
 
 
 @api.resource('/<string:username>/posts/<int:post_id>/addtags/')
-class AddPostTagAPI(Resource):
+class AddPostTagAPI(Resource, PostResourceMixin):
 
+    @basic_auth.login_required
     def post(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
-        if post is None:
-            return None, 404
+        # non-author cannot be authorized
+        if g.user.key != post.author:
+            return None, 403
+        # add tags to datastore and post as needed
         tags = request.get_json().get('tags', [])
         if len(tags) > 0:
             post.add_tags(tags)
