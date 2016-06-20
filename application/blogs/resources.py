@@ -8,9 +8,10 @@ from auth import basic_auth
 
 from users.utils import get_user_by_username_or_404
 from blogs.mixins import (
-    ReactionsResourceMixin, PostResourceMixin
+    ReactionResourceMixin, CommentResourceMixin,
+    PostResourceMixin
 )
-from blogs.models import Post, Reaction
+from blogs.models import Post, Reaction, Comment
 
 
 api = Api(Blueprint('blogs', __name__), catch_all_404s=False)
@@ -39,7 +40,7 @@ class UserBlogPostsAPI(Resource, PostResourceMixin):
 
 
 @api.resource('/<string:username>/reactions/')
-class UserReactionsAPI(Resource, ReactionsResourceMixin):
+class UserReactionsAPI(Resource, ReactionResourceMixin):
 
     def get(self, username):
         user = get_user_by_username_or_404(username)
@@ -93,6 +94,22 @@ class UserBlogPostDeleteAPI(Resource, PostResourceMixin):
             return None, 204
 
 
+@api.resource('/<string:username>/posts/<int:post_id>/addtags/')
+class AddPostTagAPI(Resource, PostResourceMixin):
+
+    @basic_auth.login_required
+    def post(self, username, post_id):
+        post = self.get_post_by_id_or_404(post_id)
+        # non-author cannot be authorized
+        if g.user.key != post.author:
+            return None, 403
+        # add tags to datastore and post as needed
+        tags = request.get_json().get('tags', [])
+        if len(tags) > 0:
+            post.add_tags(tags)
+        return None, 201
+
+
 @api.resource('/<string:username>/posts/<int:post_id>/react/')
 class UserReactAPI(Resource, PostResourceMixin):
 
@@ -112,27 +129,37 @@ class UserReactAPI(Resource, PostResourceMixin):
 
 @api.resource('/<string:username>/posts/<int:post_id>/reactions/')
 class UserBlogPostReactionsAPI(Resource,
-                               PostResourceMixin, ReactionsResourceMixin):
+                               PostResourceMixin, ReactionResourceMixin):
 
     def get(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
         return self.get_reactions_context(post.reactions)
 
 
-@api.resource('/<string:username>/posts/<int:post_id>/addtags/')
-class AddPostTagAPI(Resource, PostResourceMixin):
+@api.resource('/<string:username>/posts/<int:post_id>/comment/')
+class UserCommentAPI(Resource, PostResourceMixin):
 
     @basic_auth.login_required
     def post(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
-        # non-author cannot be authorized
-        if g.user.key != post.author:
-            return None, 403
-        # add tags to datastore and post as needed
-        tags = request.get_json().get('tags', [])
-        if len(tags) > 0:
-            post.add_tags(tags)
+        data = request.get_json()
+
+        content = data.get('content', '')
+        if content:
+            comment = Comment(user=g.user.key,
+                              post=post.key,
+                              content=content)
+            comment.put()
         return None, 201
+
+
+@api.resource('/<string:username>/posts/<int:post_id>/comments/')
+class UserBlogPostCommentsAPI(Resource,
+                              PostResourceMixin, CommentResourceMixin):
+
+    def get(self, username, post_id):
+        post = self.get_post_by_id_or_404(post_id)
+        return self.get_comments_context(post.comments)
 
 
 @api.resource('/newpost/')

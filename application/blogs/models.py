@@ -97,6 +97,9 @@ class Reaction(ndb.Model):
 class Comment(ndb.Model, CommentDeleteMixin):
     user = ndb.KeyProperty(kind=User, required=True)
     post = ndb.KeyProperty(kind=Post, required=True)
+    content = ndb.TextProperty()
+    created = ndb.DateTimeProperty(auto_now_add=True)
+    modified = ndb.DateTimeProperty(auto_now_add=True)
 
     @property
     def replies(self):
@@ -113,6 +116,9 @@ class Comment(ndb.Model, CommentDeleteMixin):
 class CommentReply(ndb.Model, CommentReplyDeleteMixin):
     user = ndb.KeyProperty(kind=User, required=True)
     comment = ndb.KeyProperty(kind=Comment, required=True)
+    content = ndb.TextProperty()
+    created = ndb.DateTimeProperty(auto_now_add=True)
+    modified = ndb.DateTimeProperty(auto_now_add=True)
 
     @property
     def likes(self):

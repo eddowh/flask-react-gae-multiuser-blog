@@ -10,7 +10,7 @@ import urls
 from settings import TIME_FMT
 
 
-class ReactionsResourceMixin(object):
+class ReactionResourceMixin(object):
 
     def get_reaction_context(self, reaction):
         username = reaction.user.get().username
@@ -36,7 +36,44 @@ class ReactionsResourceMixin(object):
         ]
 
 
-class PostResourceMixin(ReactionsResourceMixin):
+class CommentResourceMixin(object):
+
+    def get_comment_context(self, comment):
+        username = comment.user.get().username
+        post_id = comment.post.get().key.integer_id()
+        return OrderedDict([
+            ('user', username),
+            (
+                'user_uri',
+                urls.get_user_uri(username)
+            ),
+            (
+                'post_uri',
+                urls.get_user_blogpost_uri(username=username, post_id=post_id)
+            ),
+            ('content', comment.content),
+            ('likes_count', comment.likes.count()),
+            (
+                'likes_uri',
+                '',  # TODO
+            ),
+            ('replies_count', comment.replies.count()),
+            (
+                'replies_uri',
+                '',  # TODO
+            ),
+            ('created', datetime.strftime(comment.created, TIME_FMT)),
+            ('modified', datetime.strftime(comment.modified, TIME_FMT)),
+        ])
+
+    def get_comments_context(self, comments):
+        return [
+            self.get_comment_context(comment)
+            for comment in comments
+        ]
+
+
+class PostResourceMixin(ReactionResourceMixin):
 
     def get_post_by_id_or_404(self, post_id):
         key = ndb.Key('Post', int(post_id))
@@ -65,6 +102,12 @@ class PostResourceMixin(ReactionsResourceMixin):
                 'reactions_uri',
                 urls.get_user_blogpost_reactions_uri(username=username,
                                                      post_id=post_id)
+            ),
+            ('comments_count', post.comments.count()),
+            (
+                'comments_uri',
+                urls.get_user_blogpost_comments_uri(username=username,
+                                                    post_id=post_id)
             ),
             ('created', datetime.strftime(post.created, TIME_FMT)),
             ('last_modified', datetime.strftime(post.last_modified, TIME_FMT)),
