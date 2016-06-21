@@ -38,10 +38,27 @@ class ReactionResourceMixin(object):
 
 class CommentResourceMixin(object):
 
+    def get_comment_by_id_or_404(self, comment_id):
+        key = ndb.Key('Comment', int(comment_id))
+        comment = key.get()
+        if comment is None:
+            abort(404, status=404,
+                  message="A comment with that ID does not exist.")
+        else:
+            return comment
+
     def get_comment_context(self, comment):
         username = comment.user.get().username
         post_id = comment.post.get().key.integer_id()
+        comment_id = comment.key.integer_id()
         return OrderedDict([
+            ('id', comment_id),
+            (
+                'uri',
+                urls.get_user_blogpost_comment_uri(username=username,
+                                                   post_id=post_id,
+                                                   comment_id=comment_id)
+            ),
             ('user', username),
             (
                 'user_uri',

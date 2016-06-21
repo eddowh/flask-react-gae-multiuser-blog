@@ -173,6 +173,14 @@ class UserBlogPostCommentsAPI(Resource,
         return self.get_comments_context(post.comments)
 
 
+@api.resource('/<string:username>/posts/<int:post_id>/comments/<int:comment_id>')
+class UserBlogPostCommentAPI(Resource, CommentResourceMixin):
+
+    def get(self, username, post_id, comment_id):
+        comment = self.get_comment_by_id_or_404(comment_id)
+        return self.get_comment_context(comment)
+
+
 @api.resource('/newpost/')
 class NewPostAPI(Resource):
 
