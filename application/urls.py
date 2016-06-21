@@ -12,6 +12,13 @@ def get_user_uri(username):
     )
 
 
+def get_user_blogpost_reaction_uri(username, post_id, reaction_id):
+    return ROOT_URL + blogs.resources.api.url_for(
+        blogs.resources.UserBlogPostReactionAPI,
+        username=username, post_id=post_id, reaction_id=reaction_id
+    )
+
+
 def get_user_blogpost_reactions_uri(username, post_id):
     return ROOT_URL + blogs.resources.api.url_for(
         blogs.resources.UserBlogPostReactionsAPI,

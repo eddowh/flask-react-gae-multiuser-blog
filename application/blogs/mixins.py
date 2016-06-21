@@ -12,10 +12,27 @@ from settings import TIME_FMT
 
 class ReactionResourceMixin(object):
 
+    def get_reaction_by_id_or_404(self, reaction_id):
+        key = ndb.Key('Reaction', int(reaction_id))
+        reaction = key.get()
+        if reaction is None:
+            abort(404, status=404,
+                  message="A reaction with that ID does not exist.")
+        else:
+            return reaction
+
     def get_reaction_context(self, reaction):
         username = reaction.user.get().username
         post_id = reaction.post.get().key.integer_id()
+        reaction_id = reaction.key.integer_id()
         return OrderedDict([
+            ('id', reaction_id),
+            (
+                'uri',
+                urls.get_user_blogpost_reaction_uri(username=username,
+                                                    post_id=post_id,
+                                                    reaction_id=reaction_id)
+            ),
             ('user', username),
             (
                 'user_uri',

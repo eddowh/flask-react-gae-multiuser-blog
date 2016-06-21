@@ -147,6 +147,14 @@ class UserBlogPostReactionsAPI(Resource,
         return self.get_reactions_context(post.reactions)
 
 
+@api.resource('/<string:username>/posts/<int:post_id>/reactions/<int:reaction_id>')
+class UserBlogPostReactionAPI(Resource, ReactionResourceMixin):
+
+    def get(self, username, post_id, reaction_id):
+        reaction = self.get_reaction_by_id_or_404(reaction_id)
+        return self.get_reaction_context(reaction)
+
+
 @api.resource('/<string:username>/posts/<int:post_id>/comment/')
 class UserCommentAPI(Resource, PostResourceMixin):
 
