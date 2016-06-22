@@ -106,6 +106,31 @@ class ReplyToCommentAPI(Resource, CommentResourceMixin):
         return None, 201
 
 
+@api.resource('/<string:username>/comments/<int:comment_id>/like')
+class LikeCommentAPI(Resource, CommentResourceMixin):
+
+    @basic_auth.login_required
+    def post(self, username, comment_id):
+        comment = self.get_comment_by_id_or_404(comment_id)
+        if comment.likes.filter(Like.user == g.user.key).get() is None:
+            like = Like(user=g.user.key,
+                        comment=comment.key)
+            like.put()
+        return None, 201
+
+
+@api.resource('/<string:username>/comments/<int:comment_id>/unlike')
+class UnlikeCommentAPI(Resource, CommentResourceMixin):
+
+    @basic_auth.login_required
+    def post(self, username, comment_id):
+        comment = self.get_comment_by_id_or_404(comment_id)
+        like = comment.likes.filter(Like.user == g.user.key).get()
+        if like is not None:
+            like.key.delete()
+        return None, 204
+
+
 @api.resource('/<string:username>/posts/<int:post_id>/')
 class UserBlogPostAPI(Resource, PostResourceMixin):
 
@@ -225,20 +250,6 @@ class UserBlogPostCommentsAPI(Resource,
     def get(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
         return self.get_comments_context(post.comments)
-
-
-@api.resource('/<string:username>/posts/<int:post_id>/comments'
-              '/<int:comment_id>/like')
-class UserLikeCommentAPI(Resource, CommentResourceMixin):
-
-    @basic_auth.login_required
-    def post(self, username, post_id, comment_id):
-        comment = self.get_comment_by_id_or_404(comment_id)
-        if comment.likes.filter(Like.user == g.user.key).get() is None:
-            like = Like(user=g.user.key,
-                        comment=comment.key)
-            like.put()
-        return None, 201
 
 
 @api.resource('/newpost/')

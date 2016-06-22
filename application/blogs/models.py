@@ -132,3 +132,4 @@ class Like(ndb.Model):
     user = ndb.KeyProperty(kind=User, required=True)
     comment = ndb.KeyProperty(kind=Comment, default=None)
     reply = ndb.KeyProperty(kind=Comment, default=None)
+    timestamp = ndb.DateTimeProperty(auto_now_add=True)
