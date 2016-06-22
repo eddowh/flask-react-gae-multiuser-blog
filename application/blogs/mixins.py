@@ -53,31 +53,6 @@ class ReactionResourceMixin(object):
         ]
 
 
-class CommentReplyResourceMixin(object):
-
-    def get_reply_context(self, reply):
-        user = reply.user.get()
-        comment = reply.comment.get()
-        comment_id = comment.key.integer_id()
-        reply_id = reply.key.integer_id()
-        return OrderedDict([
-            ('id', reply_id),
-            (
-                'uri',
-                urls.get_comment_replies_uri(username=user.username,
-                                             comment_id=comment_id)
-            ),
-            ('user', user.username),
-            ('content', reply.content),
-            ('comment', self.get_comment_context(comment)),
-            ('created', datetime.strftime(reply.created, TIME_FMT)),
-            ('modified', datetime.strftime(reply.modified, TIME_FMT)),
-        ])
-
-    def get_replies_context(self, replies):
-        return [self.get_reply_context(r) for r in replies]
-
-
 class CommentResourceMixin(object):
 
     def get_comment_by_id_or_404(self, comment_id):
@@ -130,6 +105,31 @@ class CommentResourceMixin(object):
             self.get_comment_context(comment)
             for comment in comments
         ]
+
+
+class CommentReplyResourceMixin(CommentResourceMixin):
+
+    def get_reply_context(self, reply):
+        user = reply.user.get()
+        comment = reply.comment.get()
+        comment_id = comment.key.integer_id()
+        reply_id = reply.key.integer_id()
+        return OrderedDict([
+            ('id', reply_id),
+            (
+                'uri',
+                urls.get_comment_replies_uri(username=user.username,
+                                             comment_id=comment_id)
+            ),
+            ('user', user.username),
+            ('content', reply.content),
+            ('comment', self.get_comment_context(comment)),
+            ('created', datetime.strftime(reply.created, TIME_FMT)),
+            ('modified', datetime.strftime(reply.modified, TIME_FMT)),
+        ])
+
+    def get_replies_context(self, replies):
+        return [self.get_reply_context(r) for r in replies]
 
 
 class PostResourceMixin(object):

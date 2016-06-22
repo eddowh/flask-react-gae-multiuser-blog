@@ -61,6 +61,17 @@ class UserCommentsAPI(Resource, CommentResourceMixin):
         return self.get_comments_context(comments)
 
 
+@api.resource('/<string:username>/replies/')
+class UserRepliesAPI(Resource, CommentReplyResourceMixin):
+
+    def get(self, username):
+        user = get_user_by_username_or_404(username)
+        replies = CommentReply \
+            .query(CommentReply.user == user.key) \
+            .order(-CommentReply.created)
+        return self.get_replies_context(replies)
+
+
 @api.resource('/<string:username>/comments/<int:comment_id>')
 class UserCommentAPI(Resource, CommentResourceMixin):
 
@@ -70,8 +81,7 @@ class UserCommentAPI(Resource, CommentResourceMixin):
 
 
 @api.resource('/<string:username>/comments/<int:comment_id>/replies')
-class CommentRepliesAPI(Resource,
-                        CommentResourceMixin, CommentReplyResourceMixin):
+class CommentRepliesAPI(Resource, CommentReplyResourceMixin):
 
     def get(self, username, comment_id):
         comment = self.get_comment_by_id_or_404(comment_id)
