@@ -72,9 +72,8 @@ class CommentResourceMixin(object):
             ('id', comment_id),
             (
                 'uri',
-                urls.get_user_blogpost_comment_uri(username=username,
-                                                   post_id=post_id,
-                                                   comment_id=comment_id)
+                urls.get_user_comment_uri(username=username,
+                                          comment_id=comment_id)
             ),
             ('user', username),
             (
@@ -107,7 +106,7 @@ class CommentResourceMixin(object):
         ]
 
 
-class PostResourceMixin(ReactionResourceMixin):
+class PostResourceMixin(object):
 
     def get_post_by_id_or_404(self, post_id):
         key = ndb.Key('Post', int(post_id))

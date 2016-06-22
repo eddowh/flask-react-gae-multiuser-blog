@@ -26,13 +26,6 @@ def get_user_blogpost_reactions_uri(username, post_id):
     )
 
 
-def get_user_blogpost_comment_uri(username, post_id, comment_id):
-    return ROOT_URL + blogs.resources.api.url_for(
-        blogs.resources.UserBlogPostCommentAPI,
-        username=username, post_id=post_id, comment_id=comment_id
-    )
-
-
 def get_user_blogpost_comments_uri(username, post_id):
     return ROOT_URL + blogs.resources.api.url_for(
         blogs.resources.UserBlogPostCommentsAPI,
@@ -56,6 +49,13 @@ def get_user_blogposts_uri(username):
 def get_user_reactions_uri(username):
     return ROOT_URL + blogs.resources.api.url_for(
         blogs.resources.UserReactionsAPI, username=username
+    )
+
+
+def get_user_comment_uri(username, comment_id):
+    return ROOT_URL + blogs.resources.api.url_for(
+        blogs.resources.UserCommentAPI,
+        username=username, comment_id=comment_id
     )
 
 

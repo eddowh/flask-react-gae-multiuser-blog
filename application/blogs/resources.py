@@ -61,6 +61,14 @@ class UserCommentsAPI(Resource, CommentResourceMixin):
         return self.get_comments_context(comments)
 
 
+@api.resource('/<string:username>/comments/<int:comment_id>')
+class UserCommentAPI(Resource, CommentResourceMixin):
+
+    def get(self, username, comment_id):
+        comment = self.get_comment_by_id_or_404(comment_id)
+        return self.get_comment_context(comment)
+
+
 @api.resource('/<string:username>/posts/<int:post_id>/')
 class UserBlogPostAPI(Resource, PostResourceMixin):
 
@@ -157,7 +165,7 @@ class UserBlogPostReactionAPI(Resource, ReactionResourceMixin):
 
 
 @api.resource('/<string:username>/posts/<int:post_id>/comment/')
-class UserCommentAPI(Resource, PostResourceMixin):
+class CommentAPI(Resource, PostResourceMixin):
 
     @basic_auth.login_required
     def post(self, username, post_id):
@@ -180,15 +188,6 @@ class UserBlogPostCommentsAPI(Resource,
     def get(self, username, post_id):
         post = self.get_post_by_id_or_404(post_id)
         return self.get_comments_context(post.comments)
-
-
-@api.resource('/<string:username>/posts/<int:post_id>/comments'
-              '/<int:comment_id>')
-class UserBlogPostCommentAPI(Resource, CommentResourceMixin):
-
-    def get(self, username, post_id, comment_id):
-        comment = self.get_comment_by_id_or_404(comment_id)
-        return self.get_comment_context(comment)
 
 
 @api.resource('/<string:username>/posts/<int:post_id>/comments'
