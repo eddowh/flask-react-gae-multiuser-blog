@@ -63,3 +63,10 @@ def get_user_comments_uri(username):
     return ROOT_URL + blogs.resources.api.url_for(
         blogs.resources.UserCommentsAPI, username=username
     )
+
+
+def get_comment_replies_uri(username, comment_id):
+    return ROOT_URL + blogs.resources.api.url_for(
+        blogs.resources.CommentRepliesAPI,
+        username=username, comment_id=comment_id
+    )

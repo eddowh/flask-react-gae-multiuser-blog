@@ -9,7 +9,7 @@ from auth import basic_auth
 from users.utils import get_user_by_username_or_404
 from blogs.mixins import (
     ReactionResourceMixin, CommentResourceMixin,
-    PostResourceMixin
+    PostResourceMixin, CommentReplyResourceMixin
 )
 from blogs.models import Post, Reaction, Comment, Like, CommentReply
 
@@ -67,6 +67,33 @@ class UserCommentAPI(Resource, CommentResourceMixin):
     def get(self, username, comment_id):
         comment = self.get_comment_by_id_or_404(comment_id)
         return self.get_comment_context(comment)
+
+
+@api.resource('/<string:username>/comments/<int:comment_id>/replies')
+class CommentRepliesAPI(Resource,
+                        CommentResourceMixin, CommentReplyResourceMixin):
+
+    def get(self, username, comment_id):
+        comment = self.get_comment_by_id_or_404(comment_id)
+        replies = comment.replies
+        return self.get_replies_context(replies)
+
+
+@api.resource('/<string:username>/comments/<int:comment_id>/reply')
+class ReplyToCommentAPI(Resource, CommentResourceMixin):
+
+    @basic_auth.login_required
+    def post(self, username, comment_id):
+        comment = self.get_comment_by_id_or_404(comment_id)
+        data = request.get_json()
+
+        content = data.get('content', '')
+        if content:
+            reply = CommentReply(user=g.user.key,
+                                 comment=comment.key,
+                                 content=content)
+            reply.put()
+        return None, 201
 
 
 @api.resource('/<string:username>/posts/<int:post_id>/')
@@ -201,24 +228,6 @@ class UserLikeCommentAPI(Resource, CommentResourceMixin):
             like = Like(user=g.user.key,
                         comment=comment.key)
             like.put()
-        return None, 201
-
-
-@api.resource('/<string:username>/posts/<int:post_id>/comments'
-              '/<int:comment_id>/reply')
-class UserReplyToCommentAPI(Resource, CommentResourceMixin):
-
-    @basic_auth.login_required
-    def post(self, username, post_id, comment_id):
-        comment = self.get_comment_by_id_or_404(comment_id)
-        data = request.get_json()
-
-        content = data.get('content', '')
-        if content:
-            reply = CommentReply(user=g.user.key,
-                                 comment=comment.key,
-                                 content=content)
-            reply.put()
         return None, 201
 
 
