@@ -7,7 +7,7 @@ import sys
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-APP_NAME = 'application'
+APP_NAME = 'server'
 SYS_DIRS = [
     'lib',
 ]
